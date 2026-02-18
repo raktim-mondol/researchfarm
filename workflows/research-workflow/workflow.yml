@@ -1,0 +1,227 @@
+# Ralph loop (https://github.com/snarktank/ralph) — fresh context per agent session
+id: research-workflow
+name: Complete Research Workflow Agent
+version: 1
+description: |
+  End-to-end graduate-level research workflow.
+  Covers paper-type scoping, systematic literature review, literature matrix generation,
+  full manuscript writing, reviewer simulation, and final quality gating for publication-ready outputs.
+
+polling:
+  model: default
+  timeoutSeconds: 120
+
+agents:
+  - id: strategist
+    name: Research Strategist
+    role: analysis
+    description: Maps research goals to paper type and designs the review strategy.
+    workspace:
+      baseDir: agents/strategist
+      files:
+        AGENTS.md: agents/strategist/AGENTS.md
+        SOUL.md: agents/strategist/SOUL.md
+        IDENTITY.md: agents/strategist/IDENTITY.md
+
+  - id: writer
+    name: Academic Writer
+    role: coding
+    description: Produces full research papers and literature reviews with citation-grounded claims.
+    workspace:
+      baseDir: agents/writer
+      files:
+        AGENTS.md: agents/writer/AGENTS.md
+        SOUL.md: agents/writer/SOUL.md
+        IDENTITY.md: agents/writer/IDENTITY.md
+
+  - id: reviewer
+    name: Peer Reviewer
+    role: analysis
+    description: Performs reviewer simulation and enforces final quality standards.
+    workspace:
+      baseDir: agents/reviewer
+      files:
+        AGENTS.md: agents/reviewer/AGENTS.md
+        SOUL.md: agents/reviewer/SOUL.md
+        IDENTITY.md: agents/reviewer/IDENTITY.md
+
+steps:
+  - id: classify
+    agent: strategist
+    input: |
+      Determine the paper strategy before drafting.
+
+      TASK:
+      {{task}}
+
+      Requirements:
+      1. Choose one paper type: empirical research paper, systematic literature review,
+         narrative literature review, survey paper, conceptual/theoretical paper,
+         technical benchmark paper, or position paper.
+      2. Provide target venue assumptions and discipline conventions.
+      3. Define expected evidence level and core research questions.
+      4. Define literature-review scope plus inclusion/exclusion criteria.
+
+      Reply with:
+      STATUS: done
+      PAPER_TYPE:
+      TARGET_VENUE:
+      DISCIPLINE_CONVENTIONS:
+      EXPECTED_EVIDENCE_LEVEL:
+      RESEARCH_QUESTIONS:
+      REVIEW_SCOPE:
+      INCLUSION_CRITERIA:
+      EXCLUSION_CRITERIA:
+    expects: "STATUS: done"
+    max_retries: 2
+    on_fail:
+      escalate_to: human
+
+  - id: review
+    agent: strategist
+    input: |
+      Build the literature review artifacts as a dedicated subsystem.
+
+      TASK: {{task}}
+      PAPER_TYPE: {{paper_type}}
+      RESEARCH_QUESTIONS: {{research_questions}}
+      REVIEW_SCOPE: {{review_scope}}
+      INCLUSION_CRITERIA: {{inclusion_criteria}}
+      EXCLUSION_CRITERIA: {{exclusion_criteria}}
+
+      Follow this workflow:
+      1. Define review scope
+      2. Generate inclusion/exclusion criteria
+      3. Perform systematic search
+      4. Screen abstracts
+      5. Read full texts
+      6. Extract structured notes
+      7. Group themes
+      8. Identify gaps
+      9. Write synthesis (not summaries)
+
+      Include a literature matrix using this exact structure:
+      | Author | Year | Method | Dataset | Key Findings | Limitations |
+
+      Reply with:
+      STATUS: done
+      LITERATURE_MATRIX:
+      THEMATIC_CLUSTERS:
+      CHRONOLOGICAL_EVOLUTION_MAP:
+      OPEN_RESEARCH_GAPS:
+      RELATED_WORK_SYNTHESIS:
+    expects: "STATUS: done"
+    max_retries: 2
+    on_fail:
+      escalate_to: human
+
+  - id: draft
+    agent: writer
+    input: |
+      Write publication-ready outputs. Writing is a first-class deliverable.
+
+      TASK: {{task}}
+      PAPER_TYPE: {{paper_type}}
+      TARGET_VENUE: {{target_venue}}
+      DISCIPLINE_CONVENTIONS: {{discipline_conventions}}
+      EXPECTED_EVIDENCE_LEVEL: {{expected_evidence_level}}
+      RESEARCH_QUESTIONS: {{research_questions}}
+      LITERATURE_MATRIX: {{literature_matrix}}
+      THEMATIC_CLUSTERS: {{thematic_clusters}}
+      CHRONOLOGICAL_EVOLUTION_MAP: {{chronological_evolution_map}}
+      OPEN_RESEARCH_GAPS: {{open_research_gaps}}
+      RELATED_WORK_SYNTHESIS: {{related_work_synthesis}}
+
+      Produce both:
+      1. A full research paper draft (graduate/publishable standard)
+      2. A standalone literature review draft
+
+      Paper requirements:
+      - Informative title and structured abstract (background, objective, method, results, contribution)
+      - Introduction with clear gap and contribution statements
+      - Related work organized thematically (not author-by-author)
+      - Methodology with assumptions, design choices, metrics, and reproducibility detail
+      - Results reported neutrally; discussion interprets results and compares with prior work
+      - Mandatory limitations and future work section
+      - Conclusion tied to research questions with proportionate claims
+      - Citation provenance tracking and in-text citation consistency
+      - No uncited assertions and no novelty overclaiming
+
+      Literature review requirements:
+      - Comparative synthesis (not source-by-source summaries)
+      - Explicit thematic structure and gap identification
+      - Chronological evolution where relevant
+
+      Reply with:
+      STATUS: done
+      FULL_PAPER_DRAFT:
+      STANDALONE_LITERATURE_REVIEW:
+      REFERENCE_LIST:
+    expects: "STATUS: done"
+    max_retries: 2
+    on_fail:
+      escalate_to: human
+
+  - id: review-sim
+    agent: reviewer
+    input: |
+      Run peer-review simulation and revise drafts.
+
+      PAPER_TYPE: {{paper_type}}
+      FULL_PAPER_DRAFT: {{full_paper_draft}}
+      STANDALONE_LITERATURE_REVIEW: {{standalone_literature_review}}
+      REFERENCE_LIST: {{reference_list}}
+
+      Simulate:
+      - Reviewer #1 (Methods): soundness, assumptions, and methodological rigor
+      - Reviewer #2 (Contribution): novelty realism, gap validity, evidence support
+      - Reviewer #3 (Writing): clarity, coherence, structure, academic tone
+
+      Apply revisions and run originality checks:
+      - Detect overreliance on single sources
+      - Detect repetitive paraphrase patterns
+      - Ensure synthesis over compression
+
+      Reply with:
+      STATUS: done
+      REVISED_FULL_PAPER:
+      REVISED_LITERATURE_REVIEW:
+      REVIEWER_FEEDBACK_SUMMARY:
+    expects: "STATUS: done"
+    max_retries: 2
+    on_fail:
+      escalate_to: human
+
+  - id: quality-gate
+    agent: reviewer
+    input: |
+      Perform final non-negotiable quality gate and format outputs.
+
+      REVISED_FULL_PAPER: {{revised_full_paper}}
+      REVISED_LITERATURE_REVIEW: {{revised_literature_review}}
+      REFERENCE_LIST: {{reference_list}}
+
+      Confirm all checklist items before passing:
+      - Every claim cited
+      - No uncited assertions
+      - Limitations included
+      - Gaps acknowledged
+      - Conclusions proportionate to evidence
+
+      Export-ready formats required:
+      - Full LaTeX manuscript text
+      - Word-ready manuscript text
+      - Standalone literature review
+      - Annotated bibliography
+
+      Reply with:
+      STATUS: done
+      LATEX_MANUSCRIPT:
+      WORD_MANUSCRIPT:
+      FINAL_LITERATURE_REVIEW:
+      ANNOTATED_BIBLIOGRAPHY:
+      QUALITY_CHECKLIST_RESULT:
+    expects: "STATUS: done"
+    max_retries: 2
+    on_fail:
+      escalate_to: human

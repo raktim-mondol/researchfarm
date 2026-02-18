@@ -48,6 +48,14 @@ Paste a bug report. Get back a fix with a regression test. Triager reproduces it
 triage → investigate → setup → fix → verify → PR
 ```
 
+### research-workflow `3 agents`
+
+Turn a research prompt into publication-ready writing. The workflow classifies paper type, runs a dedicated literature-review pipeline, builds a literature matrix, drafts a full manuscript and standalone literature review, then performs peer-review simulation and final quality gating.
+
+```
+classify → review → draft → review-sim → quality-gate
+```
+
 ---
 
 ## Why It Works
